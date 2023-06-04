@@ -9,7 +9,7 @@ import space.impact.packet_network.network.ImpactPacket
 import space.impact.packet_network.network.NothingPacketDataSerializable
 import java.io.DataOutput
 
-class SerializationPacketGuiImp(
+class SerializationPacketGui(
     override val value: IPacketDataSerializable = NothingPacketDataSerializable,
 ) : SerializationPacket(value) {
 
@@ -19,7 +19,7 @@ class SerializationPacketGuiImp(
 
     override fun decode(input: ByteArrayDataInput): ImpactPacket {
         val data = value.readFromPacket(input)
-        return SerializationPacketGuiImp(data)
+        return SerializationPacketGui(data)
     }
 
     override fun processServer() {

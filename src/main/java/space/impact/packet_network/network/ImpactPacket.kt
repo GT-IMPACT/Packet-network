@@ -14,11 +14,15 @@ private const val NOT_VALID_DIM = -100500
 private const val NOT_VALID_PLAYER = -100500
 
 abstract class ImpactPacket {
-    internal var dimId: Int = NOT_VALID_DIM
-    internal var playerId: Int = NOT_VALID_PLAYER
-    internal var x: Int = -1
-    internal var y: Int = -1
-    internal var z: Int = -1
+    var dimId: Int = NOT_VALID_DIM; internal set
+
+    var playerId: Int = NOT_VALID_PLAYER; internal set
+
+    var x: Int = -1; internal set
+
+    var y: Int = -1; internal set
+
+    var z: Int = -1; internal set
 
     protected val serverWorld: WorldServer?
         get() = DimensionManager.getWorld(dimId)
@@ -27,11 +31,12 @@ abstract class ImpactPacket {
         get() = serverWorld?.getEntityByID(playerId) as? EntityPlayerMP
 
     protected val tileEntity: TileEntity?
-        get() = serverWorld?.getTileEntity(x, y, z)
+        get() = if (MinecraftSide.isServer) serverWorld?.getTileEntity(x, y, z)
+        else Minecraft.getMinecraft()?.thePlayer?.worldObj?.getTileEntity(x, y, z)
 
     abstract fun encode(output: DataOutput)
     abstract fun decode(input: ByteArrayDataInput): ImpactPacket
-    fun getPacketId(): String = this.javaClass.canonicalName
+    internal fun getPacketId(): String = this.javaClass.canonicalName
     open fun processClient(mc: Minecraft, world: IBlockAccess) = Unit
     open fun processServer() = Unit
     open fun setNetHandler(handler: INetHandler) = Unit

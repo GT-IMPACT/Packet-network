@@ -1,7 +1,6 @@
 package space.impact.packet_network.network
 
 import com.google.common.io.ByteStreams
-import cpw.mods.fml.common.FMLCommonHandler
 import cpw.mods.fml.common.FMLLog
 import cpw.mods.fml.common.network.FMLEmbeddedChannel
 import cpw.mods.fml.common.network.FMLOutboundHandler
@@ -20,10 +19,8 @@ import net.minecraft.entity.player.EntityPlayerMP
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.world.World
 import net.minecraft.world.chunk.Chunk
-import space.impact.packet_network.network.NetworkHandler.sendToPlayer
 import java.io.DataOutput
 import java.util.*
-import kotlin.collections.HashMap
 
 @ChannelHandler.Sharable
 object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
@@ -79,7 +76,7 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
     @ChannelHandler.Sharable
     private class HandlerShared : SimpleChannelInboundHandler<ImpactPacket>() {
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: ImpactPacket?) {
-            if (FMLCommonHandler.instance().effectiveSide == Side.CLIENT) {
+            if (MinecraftSide.isClient) {
                 val mc = Minecraft.getMinecraft()
                 msg?.processClient(mc, mc.thePlayer.worldObj)
             } else msg?.processServer()
@@ -98,7 +95,7 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
         val position = NetworkRegistry.TargetPoint(provider.dimensionId, x.toDouble(), y.toDouble(), z.toDouble(), range.toDouble())
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
-        channel[Side.SERVER]?.writeAndFlush(packet)
+        channel[Side.SERVER]?.writeAndFlush(packet.apply { this.x = x; this.y = y; this.z = z })
     }
 
     @JvmStatic
@@ -106,7 +103,10 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
         val position = NetworkRegistry.TargetPoint(worldObj.provider.dimensionId, xCoord.toDouble(), yCoord.toDouble(), zCoord.toDouble(), range.toDouble())
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
-        channel[Side.SERVER]?.writeAndFlush(packet)
+        channel[Side.SERVER]?.writeAndFlush(packet.apply {
+            this.x = xCoord; this.y = yCoord; this.z = zCoord
+            dimId = worldObj.provider.dimensionId
+        })
     }
 
     @JvmStatic
