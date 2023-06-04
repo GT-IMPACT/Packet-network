@@ -95,7 +95,7 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
         val position = NetworkRegistry.TargetPoint(provider.dimensionId, x.toDouble(), y.toDouble(), z.toDouble(), range.toDouble())
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
-        channel[Side.SERVER]?.writeAndFlush(packet.apply { this.x = x; this.y = y; this.z = z })
+        channel[Side.SERVER]?.writeAndFlush(packet.apply { this.x = x; this.y = y; this.z = z; dimId = provider.dimensionId })
     }
 
     @JvmStatic

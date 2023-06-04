@@ -14,8 +14,6 @@ fun BaseExtension.commonMinecraft(project: Project) {
 }
 
 private fun BaseExtension.minecraftSettings() {
-    mappings
-    mcpVersion
     version = "1.7.10-10.13.4.1614-1.7.10"
     runDir = "runDir"
 }
