@@ -4,7 +4,7 @@ import com.google.common.io.ByteArrayDataInput
 import space.impact.packet_network.network.IPacketDataSerializable
 import java.io.DataOutput
 
-class StringArrayPds(vararg value: String) : IPacketDataSerializable {
+class StringArrayPds(vararg value: String = arrayOf()) : IPacketDataSerializable {
     val array: Array<out String> = value
 
     override fun copy() = StringArrayPds(*array)

@@ -6,11 +6,11 @@ import net.minecraft.world.IBlockAccess
 import space.impact.packet_network.network.IPacketDataSerializable
 import space.impact.packet_network.network.IPacketReceiverSerializable
 import space.impact.packet_network.network.ImpactPacket
-import space.impact.packet_network.network.NothingPacketDataSerializable
+import space.impact.packet_network.network.RedirectPacketDataSerializable
 import java.io.DataOutput
 
 class SerializationPacketGui(
-    override val value: IPacketDataSerializable = NothingPacketDataSerializable,
+    override val value: IPacketDataSerializable = RedirectPacketDataSerializable,
 ) : SerializationPacket(value) {
 
     override fun encode(output: DataOutput) {

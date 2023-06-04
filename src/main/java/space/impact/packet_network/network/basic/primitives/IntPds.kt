@@ -4,7 +4,7 @@ import com.google.common.io.ByteArrayDataInput
 import space.impact.packet_network.network.IPacketDataSerializable
 import java.io.DataOutput
 
-class IntPds(val value: Int) : IPacketDataSerializable {
+class IntPds(val value: Int = 0) : IPacketDataSerializable {
 
     override fun copy() = IntPds(value)
 
