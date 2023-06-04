@@ -17,7 +17,10 @@ import io.netty.handler.codec.MessageToMessageCodec
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.player.EntityPlayerMP
+import net.minecraft.tileentity.TileEntity
 import net.minecraft.world.World
+import net.minecraft.world.chunk.Chunk
+import space.impact.packet_network.network.NetworkHandler.sendToPlayer
 import java.io.DataOutput
 import java.util.*
 import kotlin.collections.HashMap
@@ -39,6 +42,11 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
                 val buffer = Unpooled.buffer()
                 val output: DataOutput = ByteBufOutputStream(buffer)
                 output.writeUTF(msg.getPacketId())
+                output.writeInt(msg.dimId)
+                output.writeInt(msg.playerId)
+                output.writeInt(msg.x)
+                output.writeInt(msg.y)
+                output.writeInt(msg.z)
                 msg.encode(output)
                 ctx?.channel()?.attr(NetworkRegistry.FML_CHANNEL)?.get()?.also {
                     out?.add(FMLProxyPacket(buffer, it))
@@ -53,7 +61,13 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
     override fun decode(ctx: ChannelHandlerContext?, packet: FMLProxyPacket, out: MutableList<Any?>) {
         try {
             val input = ByteStreams.newDataInput(packet.payload().array())
-            val packetId = NETWORK_PACKETS[input.readUTF()]!!
+            val packetId = NETWORK_PACKETS[input.readUTF()]!!.apply {
+                dimId = input.readInt()
+                playerId = input.readInt()
+                x = input.readInt()
+                y = input.readInt()
+                z = input.readInt()
+            }
             val tPacket = packetId.decode(input)
             tPacket.setNetHandler(packet.handler())
             out.add(tPacket)
@@ -73,52 +87,49 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
     }
 
     @JvmStatic
-    fun sendToPlayer(
-        packet: ImpactPacket,
-        player: EntityPlayerMP
-    ) {
+    fun EntityPlayer.sendToPlayer(packet: ImpactPacket) {
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.PLAYER)
-        channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(player)
-        channel[Side.SERVER]?.writeAndFlush(packet.apply { playerId = player.entityId; dimId = player.dimension })
+        channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(this@sendToPlayer)
+        channel[Side.SERVER]?.writeAndFlush(packet.apply { playerId = entityId; dimId = dimension })
     }
 
     @JvmStatic
-    fun sendToAllAround(
-        packet: ImpactPacket,
-        dimension: Int,
-        x: Int, y: Int, z: Int,
-        range: Int
-    ) {
-        val position = NetworkRegistry.TargetPoint(dimension, x.toDouble(), y.toDouble(), z.toDouble(), range.toDouble())
+    fun World.sendToAllAround(packet: ImpactPacket, x: Int, y: Int, z: Int, range: Int) {
+        val position = NetworkRegistry.TargetPoint(provider.dimensionId, x.toDouble(), y.toDouble(), z.toDouble(), range.toDouble())
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
         channel[Side.SERVER]?.writeAndFlush(packet)
     }
 
     @JvmStatic
-    fun sendToServer(
-        packet: ImpactPacket,
-        player: EntityPlayer
-    ) {
-        channel[Side.CLIENT]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.TOSERVER)
-        channel[Side.CLIENT]?.writeAndFlush(packet.apply { playerId = player.entityId; dimId = player.dimension })
+    fun TileEntity.sendToAllAround(packet: ImpactPacket, range: Int) {
+        val position = NetworkRegistry.TargetPoint(worldObj.provider.dimensionId, xCoord.toDouble(), yCoord.toDouble(), zCoord.toDouble(), range.toDouble())
+        channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
+        channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
+        channel[Side.SERVER]?.writeAndFlush(packet)
     }
 
     @JvmStatic
-    fun sendPacketToAllPlayersInRange(
-        packet: ImpactPacket,
-        world: World,
-        x: Int, z: Int
-    ) {
-        if (!world.isRemote) {
-            for (player in world.playerEntities) {
+    fun EntityPlayer.sendToServer(packet: ImpactPacket) {
+        channel[Side.CLIENT]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.TOSERVER)
+        channel[Side.CLIENT]?.writeAndFlush(packet.apply { playerId = entityId; dimId = dimension })
+    }
+
+    @JvmStatic
+    fun Chunk.sendPacketToAllPlayersInChunk(packet: ImpactPacket, ) {
+        if (worldObj != null && !worldObj.isRemote) {
+            for (player in worldObj.playerEntities) {
                 if (player is EntityPlayerMP) {
-                    val tChunk = world.getChunkFromBlockCoords(x, z)
-                    if (player.serverForPlayer.playerManager.isPlayerWatchingChunk(player, tChunk.xPosition, tChunk.zPosition)) {
-                        sendToPlayer(packet, player)
+                    if (player.serverForPlayer.playerManager.isPlayerWatchingChunk(player, xPosition, zPosition)) {
+                        player.sendToPlayer(packet)
                     }
                 }
             }
         }
+    }
+
+    @JvmStatic
+    fun World.sendPacketToAllPlayersInChunk(packet: ImpactPacket, x: Int, z: Int) {
+        if (!isRemote) getChunkFromBlockCoords(x, z).sendPacketToAllPlayersInChunk(packet)
     }
 }
