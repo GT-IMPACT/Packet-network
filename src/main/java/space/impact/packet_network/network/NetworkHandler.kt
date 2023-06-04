@@ -58,14 +58,21 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
     override fun decode(ctx: ChannelHandlerContext?, packet: FMLProxyPacket, out: MutableList<Any?>) {
         try {
             val input = ByteStreams.newDataInput(packet.payload().array())
-            val packetId = NETWORK_PACKETS[input.readUTF()]!!.apply {
-                dimId = input.readInt()
-                playerId = input.readInt()
-                x = input.readInt()
-                y = input.readInt()
-                z = input.readInt()
+            val packetId = NETWORK_PACKETS[input.readUTF()]!!
+
+            val dimId = input.readInt()
+            val playerId = input.readInt()
+            val x = input.readInt()
+            val y = input.readInt()
+            val z = input.readInt()
+
+            val tPacket = packetId.decode(input).apply {
+                this.dimId = dimId
+                this.playerId = playerId
+                this.x = x
+                this.y = y
+                this.z = z
             }
-            val tPacket = packetId.decode(input)
             tPacket.setNetHandler(packet.handler())
             out.add(tPacket)
         } catch (e: Exception) {
@@ -95,7 +102,10 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
         val position = NetworkRegistry.TargetPoint(provider.dimensionId, x.toDouble(), y.toDouble(), z.toDouble(), range.toDouble())
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
-        channel[Side.SERVER]?.writeAndFlush(packet.apply { this.x = x; this.y = y; this.z = z; dimId = provider.dimensionId })
+        channel[Side.SERVER]?.writeAndFlush(packet.apply {
+            this.x = x; this.y = y; this.z = z
+            dimId = provider.dimensionId
+        })
     }
 
     @JvmStatic
@@ -116,7 +126,7 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
     }
 
     @JvmStatic
-    fun Chunk.sendPacketToAllPlayersInChunk(packet: ImpactPacket, ) {
+    fun Chunk.sendPacketToAllPlayersInChunk(packet: ImpactPacket) {
         if (worldObj != null && !worldObj.isRemote) {
             for (player in worldObj.playerEntities) {
                 if (player is EntityPlayerMP) {
