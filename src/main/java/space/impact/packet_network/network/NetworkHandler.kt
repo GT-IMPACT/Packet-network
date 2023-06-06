@@ -19,7 +19,7 @@ import net.minecraft.entity.player.EntityPlayerMP
 import net.minecraft.tileentity.TileEntity
 import net.minecraft.world.World
 import net.minecraft.world.chunk.Chunk
-import java.io.DataOutput
+import space.impact.packet_network.network.packets.ImpactPacket
 import java.util.*
 
 @ChannelHandler.Sharable
@@ -37,12 +37,12 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
         try {
             msg?.also {
                 val buffer = Unpooled.buffer()
-                val output: DataOutput = ByteBufOutputStream(buffer)
-                output.writeUTF(msg.getPacketId())
+                val output = ByteBufOutputStream(buffer)
+                output.writeInt(msg.getPacketId())
                 output.writeInt(msg.dimId)
                 output.writeInt(msg.playerId)
                 output.writeInt(msg.x)
-                output.writeInt(msg.y)
+                output.writeShort(msg.y)
                 output.writeInt(msg.z)
                 msg.encode(output)
                 ctx?.channel()?.attr(NetworkRegistry.FML_CHANNEL)?.get()?.also {
@@ -58,12 +58,12 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
     override fun decode(ctx: ChannelHandlerContext?, packet: FMLProxyPacket, out: MutableList<Any?>) {
         try {
             val input = ByteStreams.newDataInput(packet.payload().array())
-            val packetId = NETWORK_PACKETS[input.readUTF()]!!
+            val packetId = NETWORK_PACKETS[input.readInt()]!!
 
-            val dimId = input.readInt()
+            val dimId = input.readInt() //
             val playerId = input.readInt()
             val x = input.readInt()
-            val y = input.readInt()
+            val y = input.readShort().toInt()
             val z = input.readInt()
 
             val tPacket = packetId.decode(input).apply {
@@ -114,6 +114,15 @@ object NetworkHandler : MessageToMessageCodec<FMLProxyPacket, ImpactPacket>() {
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.ALLAROUNDPOINT)
         channel[Side.SERVER]?.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS)?.set(position)
         channel[Side.SERVER]?.writeAndFlush(packet.apply {
+            this.x = xCoord; this.y = yCoord; this.z = zCoord
+            dimId = worldObj.provider.dimensionId
+        })
+    }
+
+    @JvmStatic
+    fun TileEntity.sendToServer(packet: ImpactPacket) {
+        channel[Side.CLIENT]?.attr(FMLOutboundHandler.FML_MESSAGETARGET)?.set(FMLOutboundHandler.OutboundTarget.TOSERVER)
+        channel[Side.CLIENT]?.writeAndFlush(packet.apply {
             this.x = xCoord; this.y = yCoord; this.z = zCoord
             dimId = worldObj.provider.dimensionId
         })
