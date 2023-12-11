@@ -3,6 +3,7 @@ package space.impact.packet_network
 
 import cpw.mods.fml.common.Mod
 import cpw.mods.fml.common.event.FMLPostInitializationEvent
+import space.impact.packet_network.config.RegisteredPackets
 import space.impact.packet_network.network.NetworkHandler
 import space.impact.packet_network.network.registerBasicPackets
 
@@ -22,5 +23,6 @@ object ImpactPacketSystem {
     @Mod.EventHandler
     fun postInit(event: FMLPostInitializationEvent?) {
         NetworkHandler.init()
+        RegisteredPackets.createFile()
     }
 }

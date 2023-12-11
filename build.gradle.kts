@@ -29,4 +29,5 @@ buildConfig {
 dependencies {
     api("space.impact:forgelin:2.0.+") { isChanging = true }
     api("com.github.GTNewHorizons:CodeChickenLib:1.1.+:dev") { isChanging = true }
+//    implementation("space.impact:impact:1.1.0.2-8-g5772fc9.dirty")
 }
