@@ -31,7 +31,7 @@ open class StreamPacketBase(
         return StreamPacketBase(packetId, commonProcess, read = input)
     }
 
-    fun transaction(value: ByteArrayDataInput): StreamPacketBase {
+    fun transaction(value: ByteArrayDataOutput): StreamPacketBase {
         return StreamPacketBase(packetId, commonProcess, write = value)
     }
 
