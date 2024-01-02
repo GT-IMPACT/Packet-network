@@ -31,6 +31,10 @@ open class StreamPacketBase(
         return StreamPacketBase(packetId, commonProcess, read = input)
     }
 
+    fun transaction(value: ByteArrayDataInput): StreamPacketBase {
+        return StreamPacketBase(packetId, commonProcess, write = value)
+    }
+
     fun transaction(value: Int): StreamPacketBase {
         val write = ByteStreams.newDataOutput(20 * 2 + 4)
         write.writeInt(value)
