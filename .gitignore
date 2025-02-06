@@ -19,6 +19,7 @@ eclipse/
 out/
 build/
 idea/
+run/
 .idea/
 .gradle/
 *.psd
