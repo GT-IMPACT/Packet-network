@@ -11,6 +11,7 @@ val modName: String by extra
 val modGroup: String by extra
 val modAdapter: String by extra
 
+extra.set("modVersion", getVersionMod())
 
 buildConfig {
     packageName("$modGroup.$modId")
