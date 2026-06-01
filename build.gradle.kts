@@ -29,10 +29,13 @@ repositories {
             includeGroup("space.impact")
             includeGroupByRegex("space\\.impact\\..+")
         }
+        credentials {
+            username = System.getenv("MAVEN_USER") ?: "NONE"
+            password = System.getenv("MAVEN_PASSWORD") ?: "NONE"
+        }
     }
 }
 
 dependencies {
-    api("space.impact:Forgelin:2.0.3")
-    api("com.github.GTNewHorizons:CodeChickenLib:1.1.+:dev") { isChanging = true }
+    api("space.impact:Forgelin:2.1.1")
 }

@@ -1,7 +1,6 @@
 package space.impact.packet_network.network.packets
 
 import com.google.common.io.ByteArrayDataInput
-import com.google.common.io.ByteArrayDataOutput
 import io.netty.buffer.ByteBufOutputStream
 import net.minecraft.client.Minecraft
 import net.minecraft.entity.player.EntityPlayerMP
@@ -11,7 +10,6 @@ import net.minecraft.world.IBlockAccess
 import net.minecraft.world.WorldServer
 import net.minecraftforge.common.DimensionManager
 import space.impact.packet_network.network.MinecraftSide
-import java.io.DataOutput
 
 private const val NOT_VALID_DIM = -100500
 private const val NOT_VALID_PLAYER = -100500
